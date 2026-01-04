@@ -4,7 +4,7 @@ from machine import SPI
 spi = SPI(1, baudrate=8000000, polarity=0, phase=0)
 tft=TFT(spi,aDC=8, aReset=12, aCS=9)
 tft.init_7735(tabcolor=tft.GREENTAB, size=(128,160))
-tft.rotation(1)
+tft.rotation(0)
 tft.fill(TFT.WHITE)
 
 def render_bmp(x_pos, y_pos, file):
@@ -41,5 +41,5 @@ def render_bmp(x_pos, y_pos, file):
                         bgr = f.read(3)
                         tft._pushcolor(TFTColor(bgr[0],bgr[1],bgr[2]))
 
-render_bmp(15,128-48,'flower64x48.bmp')
+render_bmp(0,15,'Rain.bmp')
 spi.deinit()
