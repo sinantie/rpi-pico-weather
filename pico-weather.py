@@ -74,40 +74,41 @@ print(forecast)
 print()
 w.close()
 
-'''
-def pbm_draw(x_pos,y_pos,file):
-    with open(file, 'rb') as f:
-        f.readline() # The first 2 lines of PBM files are info not related to the image
-        f.readline() # the 2 readlines remove these lines
-        size = f.readline().decode('utf-8') # The 3rd row includes a byte with picture sizes that is decoded
-        (x,y)=size.split("\n")[0].split(" ") # X variable gets the width, y variable gets the height
-        data = bytearray(f.read())
-    
-    # Convert monochrome PBM data to RGB565 for TFT display
-    width = int(x)
-    height = int(y)
-    # expected_bytes = (width * height) // 8
-    # print(f"Loading image: {file}, size: {width}x{height}")
-    # print(f"Data length: {len(data)}, expected: {expected_bytes}")
-    # # Truncate data to expected length
-    # data = data[:expected_bytes]
-    # rgb_data = bytearray(width * height * 2)  # RGB565 is 2 bytes per pixel
-    
-    # for i in range(len(data)):
-    #     byte = data[i]
-    #     for bit in range(8):
-    #         pixel = (byte >> bit) & 1  # Try LSB first instead of MSB
-    #         color = 0xFFFF if pixel == 0 else 0x0000  # White for 0, Black for 1
-    #         color = rgb565_to_bgr565(color)  # Convert to BGR565 for BLACKTAB
-    #         idx = (i * 8 + bit) * 2
-    #         if idx < len(rgb_data) - 1:
-    #             rgb_data[idx] = color >> 8  # Big-endian
-    #             rgb_data[idx + 1] = color & 0xFF
-    '''
-    # Display on TFT
-    #tft.image(x_pos, y_pos, x_pos + width - 1, y_pos + height - 1, data)
-    render_bmp(0,15,'Fog.bmp')
-spi.deinit()
+# Function to render BMP images
+def render_bmp(x_pos, y_pos, file):
+    f=open(file, 'rb')
+    if f.read(2) == b'BM':  #header
+        dummy = f.read(8) #file size(4), creator bytes(4)
+        offset = int.from_bytes(f.read(4), 'little')
+        hdrsize = int.from_bytes(f.read(4), 'little')
+        width = int.from_bytes(f.read(4), 'little')
+        height = int.from_bytes(f.read(4), 'little')
+        if int.from_bytes(f.read(2), 'little') == 1: #planes must be 1
+            depth = int.from_bytes(f.read(2), 'little')
+            print("BMP width:", width, "height:", height, "depth:", depth)
+            if depth == 24 and int.from_bytes(f.read(4), 'little') == 0:#compress method == uncompressed
+                print("Image size:", width, "x", height)
+                rowsize = (width * 3 + 3) & ~3
+                if height < 0:
+                    height = -height
+                    flip = False
+                else:
+                    flip = True
+                w, h = width, height
+                if w > 128: w = 128
+                if h > 160: h = 160
+                tft._setwindowloc((x_pos,y_pos),(x_pos + w - 1,y_pos + h - 1))
+                for row in range(h):
+                    if flip:
+                        pos = offset + (height - 1 - row) * rowsize
+                    else:
+                        pos = offset + row * rowsize
+                    if f.tell() != pos:
+                        dummy = f.seek(pos)
+                    for col in range(w):
+                        bgr = f.read(3)
+                        tft._pushcolor(TFTColor(bgr[0],bgr[1],bgr[2]))
+
 
 
 #Today forecast
@@ -121,7 +122,7 @@ weather_descr=weather_code_descr[weather_code]
 # epd.text("Today's Weather", 2, 1, black)
 tft.text((2, 1), "Today's Weather", TFT.BLACK, sysfont, 1)
 
-pbm_draw(0, 15, weather_descr+'.pbm')
+render_bmp(0, 15, weather_descr+'.bmp')
 tft.text((65, 15), " Max:{:.0f}C".format(temp_max), TFT.BLACK, sysfont, 1)
 tft.text((65, 25), " Min:{:.0f}C".format(temp_min), TFT.BLACK, sysfont, 1)
 tft.text((65, 35), "Rain:{:02d}mm".format(rain_qty), TFT.BLACK, sysfont, 1)
@@ -160,4 +161,3 @@ time.sleep(10)
 # sleep_minutes=15
 # sleep_time=sleep_minutes * 60 * 1000
 # deepsleep(sleep_time)
-
