@@ -7,7 +7,7 @@ from netman import connect_wifi
 import config
 import urequests, json
 import framebuf, time
-from ST7735 import TFT
+from ST7735 import TFT, TFTColor
 from sysfont import sysfont
 from machine import SPI
 from machine import deepsleep
@@ -74,7 +74,7 @@ print(forecast)
 print()
 w.close()
 
-
+'''
 def pbm_draw(x_pos,y_pos,file):
     with open(file, 'rb') as f:
         f.readline() # The first 2 lines of PBM files are info not related to the image
@@ -103,9 +103,11 @@ def pbm_draw(x_pos,y_pos,file):
     #         if idx < len(rgb_data) - 1:
     #             rgb_data[idx] = color >> 8  # Big-endian
     #             rgb_data[idx + 1] = color & 0xFF
-    
+    '''
     # Display on TFT
-    tft.image(x_pos, y_pos, x_pos + width - 1, y_pos + height - 1, data)
+    #tft.image(x_pos, y_pos, x_pos + width - 1, y_pos + height - 1, data)
+    render_bmp(0,15,'Fog.bmp')
+spi.deinit()
 
 
 #Today forecast
@@ -158,3 +160,4 @@ time.sleep(10)
 # sleep_minutes=15
 # sleep_time=sleep_minutes * 60 * 1000
 # deepsleep(sleep_time)
+
